@@ -10,24 +10,20 @@
 
   let showPassword = false;
   let isEditing = false;
-  let editData = { ...entry };
+  let editData = {};
   let showRegenerateModal = false;
-  let neverExpire = entry.expiryDays === 0;
-  let editExpiryWeeks = Math.floor((entry.expiryDays || 0) / 7);
-  let editExpiryDays = (entry.expiryDays || 0) % 7;
 
-  // Calculate password expiry status
-  $: expiryStatus = calculateExpiryStatus();
+  $: expiryStatus = calculateExpiryStatus(entry);
 
-  function calculateExpiryStatus() {
-    if (!entry.hasPassword || !entry.passwordSetDate) return null;
-    if (entry.expiryDays === 0) {
+  function calculateExpiryStatus(currentEntry) {
+    if (!currentEntry.hasPassword || !currentEntry.passwordSetDate) return null;
+    if (currentEntry.expiryDays === 0) {
       return { status: 'never', days: null, weeks: null, remainingDays: null };
     }
 
     const now = new Date();
-    const passwordDate = new Date(entry.passwordSetDate);
-    const expiryDate = addDays(passwordDate, entry.expiryDays ?? 90);
+    const passwordDate = new Date(currentEntry.passwordSetDate);
+    const expiryDate = addDays(passwordDate, currentEntry.expiryDays ?? 90);
     const daysUntilExpiry = differenceInDays(expiryDate, now);
     
     const weeks = Math.floor(daysUntilExpiry / 7);
@@ -46,28 +42,41 @@
     dispatch('notify', `${type} copied`);
   }
 
+
   function handleDelete() {
+
     if (confirm(`Delete "${entry.title}"?`)) {
       deleteEntry(entry.id);
       dispatch('notify', 'Entry deleted');
     }
   }
 
+
   function startEdit() {
+    editData = {
+      ...entry,
+      _neverExpire: entry.expiryDays === 0,
+      _editExpiryWeeks: Math.floor((entry.expiryDays || 0) / 7),
+      _editExpiryDays: (entry.expiryDays || 0) % 7,
+    };
     isEditing = true;
-    editData = { ...entry };
-    neverExpire = entry.expiryDays === 0;
-    editExpiryWeeks = Math.floor((entry.expiryDays || 0) / 7);
-    editExpiryDays = (entry.expiryDays || 0) % 7;
   }
 
   function saveEdit() {
-    const newExpiryDays = neverExpire ? 0 : (editExpiryWeeks || 0) * 7 + (editExpiryDays || 0);
+    const { 
+      _neverExpire, 
+      _editExpiryWeeks, 
+      _editExpiryDays, 
+      ...dataToSave 
+    } = editData;
+
+    const newExpiryDays = _neverExpire ? 0 : (_editExpiryWeeks || 0) * 7 + (_editExpiryDays || 0);
+    
     updateEntry(entry.id, {
-      ...editData,
-      tags: typeof editData.tags === 'string'
-        ? editData.tags.split(',').map(t => t.trim()).filter(t => t)
-        : editData.tags,
+      ...dataToSave,
+      tags: typeof dataToSave.tags === 'string'
+        ? dataToSave.tags.split(',').map(t => t.trim()).filter(t => t)
+        : dataToSave.tags,
       expiryDays: newExpiryDays
     });
     isEditing = false;
@@ -76,12 +85,13 @@
 
   function cancelEdit() {
     isEditing = false;
-    editData = { ...entry };
+
   }
 </script>
 
 <div class="card relative group">
   {#if !isEditing}
+
     <div class="absolute right-3 top-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <button class="btn px-2 py-1 text-xs" on:click={startEdit}>
         EDIT
@@ -199,7 +209,6 @@
       </div>
     </div>
   {:else}
-    <!-- Edit Mode -->
     <div class="space-y-2">
       <input type="text" bind:value={editData.title} placeholder="TITLE" class="input-field text-xs" />
       <input type="url" bind:value={editData.url} placeholder="URL" class="input-field text-xs" />
@@ -207,13 +216,13 @@
       <input type="password" bind:value={editData.password} placeholder="PASSWORD" class="input-field text-xs" />
       <div class="flex items-center gap-3">
         <label class="flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-cyan-400 cursor-pointer">
-          <input type="checkbox" bind:checked={neverExpire} class="w-3 h-3" />
+          <input type="checkbox" bind:checked={editData._neverExpire} class="w-3 h-3" />
           <span>Never expire</span>
         </label>
-        {#if !neverExpire}
-          <input type="number" bind:value={editExpiryWeeks} min="0" class="input-field flex-1" />
+        {#if !editData._neverExpire}
+          <input type="number" bind:value={editData._editExpiryWeeks} min="0" class="input-field flex-1" />
           <span class="text-xs font-mono text-gray-400">weeks</span>
-          <input type="number" bind:value={editExpiryDays} min="0" max="6" class="input-field flex-1" />
+          <input type="number" bind:value={editData._editExpiryDays} min="0" max="6" class="input-field flex-1" />
           <span class="text-xs font-mono text-gray-400">days</span>
         {/if}
       </div>
