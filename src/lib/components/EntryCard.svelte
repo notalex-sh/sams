@@ -61,7 +61,6 @@
     editExpiryDays = (entry.expiryDays || 0) % 7;
   }
 
-
   function saveEdit() {
     const newExpiryDays = neverExpire ? 0 : (editExpiryWeeks || 0) * 7 + (editExpiryDays || 0);
     updateEntry(entry.id, {
@@ -155,6 +154,15 @@
                     REGEN
                   </button>
                 </div>
+              {:else if expiryStatus.status === 'never'}
+                <div class="flex items-center justify-between">
+                  <span class="text-[10px] font-mono text-gray-600">
+                    Never expires
+                  </span>
+                   <button class="btn px-2 py-0.5 text-[10px] opacity-50 hover:opacity-100" on:click={() => showRegenerateModal = true}>
+                    REGEN
+                  </button>
+                </div>
               {/if}
             </div>
           {/if}
@@ -191,6 +199,7 @@
       </div>
     </div>
   {:else}
+    <!-- Edit Mode -->
     <div class="space-y-2">
       <input type="text" bind:value={editData.title} placeholder="TITLE" class="input-field text-xs" />
       <input type="url" bind:value={editData.url} placeholder="URL" class="input-field text-xs" />
