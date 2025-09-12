@@ -1,61 +1,47 @@
 // Put comments on here for visibility on how this works
 
-export async function generateKey(password, salt) {
-  // Convert password to array buffer
-  const encoder = new TextEncoder();
-  const passwordBuffer = encoder.encode(password);
-  
-  // Import password as raw key material
-  const keyMaterial = await crypto.subtle.importKey(
-    'raw',
-    passwordBuffer,
-    'PBKDF2',
-    false,
-    ['deriveBits', 'deriveKey']
-  );
-  
-  // Derive AES key from password using PBKDF2
-  // Uses 100,000 iterations for security
-  return await crypto.subtle.deriveKey(
-    {
-      name: 'PBKDF2',
-      salt: salt,
-      iterations: 100000,
-      hash: 'SHA-256'
-    },
-    keyMaterial,
-    { name: 'AES-GCM', length: 256 }, 
-    false,
-    ['encrypt', 'decrypt']
-  );
+// Generate argon2 key
+async function generateKeyFromPassword(password, salt) {
+    const result = await argon2.hash({
+        pass: password,
+        salt: salt,
+        time: 3,
+        mem: 131072,
+        hashLen: 32,
+        parallelism: 1,
+        type: argon2.ArgonType.Argon2id
+    });
+
+    return result.hash;
 }
 
 // Encrypt data using AES-GCM and return a single binary blob
 export async function encryptData(data, password) {
-  // Generate random salt and IV
   const salt = crypto.getRandomValues(new Uint8Array(16));
   const iv = crypto.getRandomValues(new Uint8Array(12));
-  
-  // Generate key from password
-  const key = await generateKey(password, salt);
-  
-  // Convert data to JSON string then to bytes
+
+  const keyHash = await generateKeyFromPassword(password, salt);
+  const key = await crypto.subtle.importKey(
+    'raw',
+    keyHash,
+    { name: 'AES-GCM' },
+    false,
+    ['encrypt']
+  );
+
   const encoder = new TextEncoder();
   const dataBuffer = encoder.encode(JSON.stringify(data));
-  
-  // Encrypt the data
   const encryptedBuffer = await crypto.subtle.encrypt(
     { name: 'AES-GCM', iv },
     key,
     dataBuffer
   );
-  
-  // Concatenate salt, iv, and encrypted data into a single buffer
+
   const finalBuffer = new Uint8Array(salt.length + iv.length + encryptedBuffer.byteLength);
   finalBuffer.set(salt, 0);
   finalBuffer.set(iv, salt.length);
   finalBuffer.set(new Uint8Array(encryptedBuffer), salt.length + iv.length);
-  
+
   return finalBuffer;
 }
 
@@ -68,21 +54,28 @@ export async function decryptData(encryptedBlob, password) {
     const salt = encryptedData.slice(0, 16);
     const iv = encryptedData.slice(16, 28);
     const data = encryptedData.slice(28);
-    
+
     // Generate key from password and stored salt
-    const key = await generateKey(password, salt);
-    
+    const keyHash = await generateKeyFromPassword(password, salt);
+	const key = await crypto.subtle.importKey(
+      'raw',
+      keyHash,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+
     // Decrypt the data
     const decryptedBuffer = await crypto.subtle.decrypt(
       { name: 'AES-GCM', iv },
       key,
       data
     );
-    
+
     // Convert decrypted bytes back to JSON
     const decoder = new TextDecoder();
     const jsonString = decoder.decode(decryptedBuffer);
-    
+
     return JSON.parse(jsonString);
   } catch (error) {
     console.error("Decryption error:", error);
@@ -110,34 +103,34 @@ export function generatePassword(options = {}) {
     numbers: true,
     symbols: true
   };
-  
+
   const config = { ...defaults, ...options };
-  
+
   let charset = '';
   if (config.uppercase) charset += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
   if (config.lowercase) charset += 'abcdefghijklmnopqrstuvwxyz';
   if (config.numbers) charset += '0123456789';
   if (config.symbols) charset += '!@#$%^&*()_+-=[]{}|;:,.<>?';
-  
+
   if (!charset) {
     throw new Error('At least one character type must be selected');
   }
-  
+
   const array = new Uint32Array(config.length);
   crypto.getRandomValues(array);
-  
+
   let password = '';
   for (let i = 0; i < config.length; i++) {
     password += charset[array[i] % charset.length];
   }
-  
+
   return password;
 }
 
 
 export function calculatePasswordStrength(password) {
   if (!password) return 0;
-  
+
   let strength = 0;
 
   if (password.length >= 8) strength++;
