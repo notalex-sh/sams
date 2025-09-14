@@ -1,4 +1,4 @@
-// Put comments on here for visibility on how this works
+// I have put comments on here for visibility on how this works
 
 // Generate argon2 key
 async function generateKeyFromPassword(password, salt) {
