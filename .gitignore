@@ -1,0 +1,83 @@
+# --- Node ---
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+package-lock.json.*   # partials from merges
+# keep your lockfile(s) tracked
+# !package-lock.json
+# !yarn.lock
+# !pnpm-lock.yaml
+
+# --- SvelteKit / Vite build output & caches ---
+.svelte-kit/
+build/
+dist/
+.node_modules/.cache/
+.vite/                 # sometimes created by tooling
+node_modules/.vite/
+
+# --- Testing (Vitest / Playwright / Coverage) ---
+coverage/
+.nyc_output/
+test-results/
+playwright-report/
+blob-report/
+
+# --- Env files ---
+.env
+.env.*
+!.env.example          # keep a template in git
+
+# --- Logs & diagnostics ---
+logs/
+*.log
+*.pid
+*.seed
+*.pid.lock
+
+# --- TypeScript / Linters ---
+*.tsbuildinfo
+.eslintcache
+.stylelintcache
+
+# --- Tooling / Framework adapters ---
+.vercel/
+.netlify/
+firebase-debug.log
+.firebase/
+.functions-cache/
+
+# --- Package managers / monorepo tools ---
+.pnpm-store/
+.turbo/
+turbo-*
+
+# --- IDEs & editors ---
+.idea/
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+
+# --- OS junk ---
+.DS_Store
+Thumbs.db
+Icon?
+ehthumbs.db
+
+# --- Misc build artifacts ---
+*.tgz
+*.zip
+*.tar
+*.tar.gz
+
+# --- Storybook (if used) ---
+storybook-static/
+
+# --- Docker (optional) ---
+*.local.yml
+docker-compose.override.yml
