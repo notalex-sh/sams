@@ -100,7 +100,7 @@
   <footer class="border-t border-gray-900 py-4">
     <div class="container mx-auto px-4">
       <p class="text-center text-xs font-mono text-gray-700 tracking-wider">
-        AES-256-GCM | PBKDF2 | LOCAL ENCRYPTION ONLY
+        AES-256-GCM | ARGON2 | LOCAL ENCRYPTION ONLY
       </p>
     </div>
   </footer>
