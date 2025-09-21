@@ -39,7 +39,7 @@ sams-password-manager/
 ### Encryption Details
 
 - **Algorithm**: AES-256-GCM (256-bit key)
-- **Key Derivation**: PBKDF2 with SHA-256
+- **Key Derivation**: Argon2 with SHA-256
 - **Iterations**: 100,000
 - **Salt**: 16 bytes (randomly generated)
 - **IV**: 12 bytes (randomly generated for each encryption)
