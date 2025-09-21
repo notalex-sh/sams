@@ -4,7 +4,7 @@ A modern, secure password manager built with SvelteKit and Tailwind CSS. All enc
 
 ## Features
 
-- **Local Encryption**: All data is encrypted locally using AES-256-GCM with PBKDF2 key derivation
+- **Local Encryption**: All data is encrypted locally using AES-256-GCM with Argon2 key derivation
 - **Password Expiry Alerts**: Set expiry dates for passwords and get notified when they need updating
 - **Password Generator**: Generate secure passwords with customizable options and preview before saving
 - **CSV Export**: Export your data to CSV format (with or without passwords)
@@ -39,7 +39,7 @@ sams-password-manager/
 ### Encryption Details
 
 - **Algorithm**: AES-256-GCM (256-bit key)
-- **Key Derivation**: Argon2 with SHA-256
+- **Key Derivation**: Argon2
 - **Iterations**: 100,000
 - **Salt**: 16 bytes (randomly generated)
 - **IV**: 12 bytes (randomly generated for each encryption)
