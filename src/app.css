@@ -10,7 +10,7 @@
   body {
     @apply bg-black text-gray-100;
     font-family: 'Courier New', monospace;
-    font-weight: 300;
+    font-weight: 400;
     letter-spacing: 0.025em;
   }
   
@@ -25,18 +25,19 @@
 }
 
 @layer components {
-.modal-content {
+  .modal-content {
     @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50;
     @apply bg-gray-900 border border-cyan-400/60 p-6 w-full max-w-lg;
     @apply shadow-[0_0_40px_rgba(6,182,212,0.3)] animate-scale-in;
   }
+  
   .custom-checkbox {
     @apply w-4 h-4 bg-gray-900 border-gray-700 text-cyan-400 rounded-sm cursor-pointer;
     @apply focus:ring-0 focus:ring-offset-0;
   }
 
   .btn {
-    @apply px-4 py-2 font-mono text-xs uppercase tracking-widest transition-all duration-200;
+    @apply px-4 py-2 font-mono text-sm uppercase tracking-wide transition-all duration-200;
     @apply bg-gray-900 text-cyan-400 border border-cyan-400/60;
     @apply hover:bg-cyan-400/20 hover:border-cyan-400 hover:shadow-[0_0_10px_rgba(6,182,212,0.4)];
     @apply focus:outline-none focus:ring-1 focus:ring-cyan-400 focus:ring-offset-1 focus:ring-offset-gray-950;
@@ -66,19 +67,19 @@
   }
 
   .card {
-    @apply bg-gray-900 border border-gray-800 p-4;
+    @apply bg-gray-900/50 backdrop-blur-sm border border-gray-800 p-5 rounded-sm;
     @apply hover:border-gray-700 transition-all duration-200;
     @apply hover:shadow-[0_0_20px_rgba(6,182,212,0.08)];
   }
 
   .badge {
-    @apply inline-flex items-center px-2 py-0.5 text-xs font-mono;
+    @apply inline-flex items-center px-2 py-1 text-xs font-mono rounded-sm;
     @apply bg-gray-800 text-cyan-400 border border-cyan-400/30;
     @apply hover:border-cyan-400/50 transition-all duration-200;
   }
 
   .status-dot {
-    @apply w-2 h-2;
+    @apply w-2 h-2 rounded-full;
     @apply animate-pulse;
   }
 
@@ -112,10 +113,25 @@
     @apply animate-fade-in;
   }
 
-  .modal-content {
-    @apply fixed top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-50;
-    @apply bg-gray-900 border border-cyan-400/60 p-6 w-full max-w-lg;
-    @apply shadow-[0_0_40px_rgba(6,182,212,0.3)] animate-scale-in;
+  .loading-screen {
+    @apply fixed inset-0 bg-black/95 backdrop-blur-md z-50;
+    @apply flex items-center justify-center;
+    @apply animate-fade-in;
+  }
+  
+  .loading-content {
+    @apply text-center;
+  }
+  
+  .loading-spinner {
+    @apply w-12 h-12 mx-auto mb-4;
+    @apply border-4 border-gray-700 border-t-cyan-400 rounded-full;
+    animation: spin 1s linear infinite;
+  }
+  
+  @keyframes spin {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
   }
 }
 
@@ -142,6 +158,7 @@
     pointer-events: none;
     z-index: 1;
     animation: scan 8s linear infinite;
+    opacity: 0.5;
   }
   
   @keyframes scan {
@@ -171,7 +188,7 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar {
-    width: 4px;
+    width: 6px;
   }
 
   .custom-scrollbar::-webkit-scrollbar-track {
@@ -179,7 +196,7 @@
   }
 
   .custom-scrollbar::-webkit-scrollbar-thumb {
-    @apply bg-cyan-400/30 hover:bg-cyan-400/50 transition-colors;
+    @apply bg-cyan-400/30 hover:bg-cyan-400/50 transition-colors rounded-full;
   }
 
   @keyframes fade-in {

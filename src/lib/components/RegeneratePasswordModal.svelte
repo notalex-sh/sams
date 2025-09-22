@@ -8,9 +8,9 @@
   export let entry;
   
   let newPassword = '';
-  let expiryOption = 'custom';
-  let customWeeks = Math.floor((entry.expiryDays || 90) / 7);
-  let customDays = (entry.expiryDays || 90) % 7;
+  let expiryOption = entry.expiryDays === 0 ? 'never' : 'custom';
+  let customWeeks = Math.floor((entry.expiryDays || 0) / 7);
+  let customDays = (entry.expiryDays || 0) % 7;
   let copied = false;
   
   $: if (!newPassword) {
@@ -27,7 +27,7 @@
     switch(expiryOption) {
       case 'never': return 0;
       case 'custom': return (customWeeks || 0) * 7 + (customDays || 0);
-      default: return entry.expiryDays || 90;
+      default: return 0;
     }
   }
 

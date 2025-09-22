@@ -13,9 +13,10 @@
   let docsUrl = '';
   let tags = '';
   let notes = '';
-  let expiryWeeks = 12;
-  let expiryDaysInput = 6;
-  let neverExpire = false;
+  let expiryWeeks = 0;
+  let expiryDaysInput = 0;
+  let neverExpire = true; // Default to never expire
+  let showPasswordInput = false; // Toggle for password visibility
   
   $: expiryDays = neverExpire ? 0 : (expiryWeeks || 0) * 7 + (expiryDaysInput || 0);
 
@@ -66,6 +67,7 @@
     
     addEntry(entry);
 
+    // Reset form
     title = '';
     url = '';
     username = '';
@@ -73,18 +75,19 @@
     docsUrl = '';
     tags = '';
     notes = '';
-    expiryWeeks = 12;
-    expiryDaysInput = 6;
-    neverExpire = false;
+    expiryWeeks = 0;
+    expiryDaysInput = 0;
+    neverExpire = true; // Reset to default
     generatedPassword = '';
     showPasswordPreview = false;
+    showPasswordInput = false;
     
     dispatch('notify', 'Entry created');
   }
 </script>
 
 <div class="card">
-  <h3 class="mb-4 text-sm font-mono uppercase tracking-[0.2em] text-cyan-400">
+  <h3 class="mb-4 text-base font-mono uppercase tracking-[0.2em] text-cyan-400">
     NEW ENTRY
   </h3>
   
@@ -117,12 +120,30 @@
     </div>
     
     <div>
-      <input
-        type="password"
-        bind:value={password}
-        placeholder="PASSWORD"
-        class="input-field"
-      />
+      <div class="relative">
+        {#if showPasswordInput}
+          <input
+            type="text"
+            bind:value={password}
+            placeholder="PASSWORD"
+            class="input-field pr-20"
+          />
+        {:else}
+          <input
+            type="password"
+            bind:value={password}
+            placeholder="PASSWORD"
+            class="input-field pr-20"
+          />
+        {/if}
+        <button
+          type="button"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500 hover:text-cyan-400 transition-colors px-2 py-1"
+          on:click={() => showPasswordInput = !showPasswordInput}
+        >
+          {showPasswordInput ? 'HIDE' : 'SHOW'}
+        </button>
+      </div>
       {#if password}
         <PasswordStrengthMeter strength={passwordStrength} />
       {/if}
@@ -177,10 +198,10 @@
       
       {#if showPasswordPreview && generatedPassword}
         <div class="mt-3 border border-cyan-400/20 bg-gray-950 p-3 animate-slide-up">
-          <div class="mb-2 text-[10px] font-mono uppercase tracking-wider text-gray-600">
+          <div class="mb-2 text-xs font-mono uppercase tracking-wider text-gray-600">
             Preview
           </div>
-          <div class="break-all font-mono text-xs text-cyan-300">
+          <div class="break-all font-mono text-sm text-cyan-300">
             {generatedPassword}
           </div>
           <div class="mt-3 flex gap-2">
@@ -211,33 +232,33 @@
     </div>
     
     <div class="border-t border-gray-900 pt-3">
-        <div class="flex items-center gap-3">
-          <label class="flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-cyan-400 cursor-pointer">
-            <input
-              type="checkbox"
-              bind:checked={neverExpire}
-              class="custom-checkbox"
-            />
-            <span>Never expire</span>
-          </label>
-          {#if !neverExpire}
-            <input
-              type="number"
-              bind:value={expiryWeeks}
-              min="0"
-              class="input-field w-full text-center py-1"
-            />
-            <span class="text-xs font-mono text-gray-400">weeks</span>
-            <input
-              type="number"
-              bind:value={expiryDaysInput}
-              min="0"
-              max="6"
-              class="input-field w-full text-center py-1"
-            />
-            <span class="text-xs font-mono text-gray-400">days</span>
-          {/if}
-        </div>
+      <div class="flex items-center gap-3">
+        <label class="flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-cyan-400 cursor-pointer">
+          <input
+            type="checkbox"
+            bind:checked={neverExpire}
+            class="custom-checkbox"
+          />
+          <span>Never expire</span>
+        </label>
+        {#if !neverExpire}
+          <input
+            type="number"
+            bind:value={expiryWeeks}
+            min="0"
+            class="input-field w-full text-center py-1"
+          />
+          <span class="text-xs font-mono text-gray-400">weeks</span>
+          <input
+            type="number"
+            bind:value={expiryDaysInput}
+            min="0"
+            max="6"
+            class="input-field w-full text-center py-1"
+          />
+          <span class="text-xs font-mono text-gray-400">days</span>
+        {/if}
+      </div>
     </div>
     
     <div>

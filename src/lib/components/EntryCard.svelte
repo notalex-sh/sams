@@ -9,6 +9,7 @@
   export let entry;
 
   let showPassword = false;
+  let showEditPassword = false; // For edit mode
   let isEditing = false;
   let editData = {};
   let showRegenerateModal = false;
@@ -42,15 +43,12 @@
     dispatch('notify', `${type} copied`);
   }
 
-
   function handleDelete() {
-
     if (confirm(`Delete "${entry.title}"?`)) {
       deleteEntry(entry.id);
       dispatch('notify', 'Entry deleted');
     }
   }
-
 
   function startEdit() {
     editData = {
@@ -60,6 +58,7 @@
       _editExpiryDays: (entry.expiryDays || 0) % 7,
     };
     isEditing = true;
+    showEditPassword = false; // Reset password visibility
   }
 
   function saveEdit() {
@@ -85,13 +84,12 @@
 
   function cancelEdit() {
     isEditing = false;
-
+    showEditPassword = false;
   }
 </script>
 
 <div class="card relative group">
   {#if !isEditing}
-
     <div class="absolute right-3 top-3 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
       <button class="btn px-2 py-1 text-xs" on:click={startEdit}>
         EDIT
@@ -101,7 +99,7 @@
       </button>
     </div>
     <div class="pr-20">
-      <h3 class="text-sm font-mono text-gray-100">
+      <h3 class="text-base font-mono text-gray-100">
         {#if entry.url}
           <a href={entry.url} target="_blank" rel="noopener noreferrer" class="hover:text-cyan-400 transition-colors">
             {entry.title}
@@ -111,28 +109,33 @@
           {entry.title}
         {/if}
       </h3>
+      
       {#if entry.url}
         <div class="mt-1 text-xs font-mono text-gray-600 truncate">
           {entry.url}
         </div>
       {/if}
+      
       {#if entry.docsUrl}
         <a href={entry.docsUrl} target="_blank" rel="noopener noreferrer" class="mt-2 inline-block text-xs font-mono text-cyan-400/60 hover:text-cyan-400 transition-colors">
           [DOCS]
         </a>
       {/if}
+      
       {#if entry.tags && entry.tags.length > 0}
         <div class="mt-2 flex flex-wrap gap-1">
           {#each entry.tags as tag}
-            <span class="badge text-[10px]">{tag}</span>
+            <span class="badge text-xs">{tag}</span>
           {/each}
         </div>
       {/if}
+      
       {#if entry.notes}
-        <div class="mt-2 text-xs font-mono text-gray-500">
+        <div class="mt-2 text-sm font-mono text-gray-500">
           {entry.notes}
         </div>
       {/if}
+      
       {#if entry.hasPassword}
         <div class="mt-3 pt-3 border-t border-gray-900">
           {#if expiryStatus}
@@ -157,43 +160,48 @@
                 </div>
               {:else if expiryStatus.status === 'ok'}
                 <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-mono text-gray-600">
+                  <span class="text-xs font-mono text-gray-600">
                     Expires in {expiryStatus.weeks} weeks, {expiryStatus.remainingDays} days
                   </span>
-                  <button class="btn px-2 py-0.5 text-[10px] opacity-50 hover:opacity-100" on:click={() => showRegenerateModal = true}>
+                  <button class="btn px-2 py-0.5 text-xs opacity-50 hover:opacity-100" on:click={() => showRegenerateModal = true}>
                     REGEN
                   </button>
                 </div>
               {:else if expiryStatus.status === 'never'}
                 <div class="flex items-center justify-between">
-                  <span class="text-[10px] font-mono text-gray-600">
+                  <span class="text-xs font-mono text-gray-600">
                     Never expires
                   </span>
-                   <button class="btn px-2 py-0.5 text-[10px] opacity-50 hover:opacity-100" on:click={() => showRegenerateModal = true}>
+                  <button class="btn px-2 py-0.5 text-xs opacity-50 hover:opacity-100" on:click={() => showRegenerateModal = true}>
                     REGEN
                   </button>
                 </div>
               {/if}
             </div>
           {/if}
+          
           <div class="space-y-2">
             <div class="flex items-center gap-2">
-              <span class="text-[10px] font-mono uppercase text-gray-600 w-16">USER:</span>
-              <span class="font-mono text-xs text-gray-300 flex-1">{entry.username || '—'}</span>
+              <span class="text-xs font-mono uppercase text-gray-600 w-16">USER:</span>
+              <span class="font-mono text-sm text-gray-300 flex-1">{entry.username || '—'}</span>
               {#if entry.username}
-                <button class="btn px-2 py-0.5 text-[10px]" on:click={() => copyToClipboard(entry.username, 'Username')}>
+                <button class="btn px-2 py-0.5 text-xs" on:click={() => copyToClipboard(entry.username, 'Username')}>
                   COPY
                 </button>
               {/if}
             </div>
             <div class="flex items-center gap-2">
-              <span class="text-[10px] font-mono uppercase text-gray-600 w-16">PASS:</span>
-              <input type={showPassword ? 'text' : 'password'} value={entry.password || ''} readonly class="flex-1 bg-black border border-gray-900 px-2 py-0.5 text-xs font-mono text-gray-300" />
-              <button class="btn px-2 py-0.5 text-[10px]" on:click={() => showPassword = !showPassword}>
+              <span class="text-xs font-mono uppercase text-gray-600 w-16">PASS:</span>
+              {#if showPassword}
+                <input type="text" value={entry.password || ''} readonly class="flex-1 bg-black border border-gray-900 px-2 py-1 text-sm font-mono text-gray-300" />
+              {:else}
+                <input type="password" value={entry.password || ''} readonly class="flex-1 bg-black border border-gray-900 px-2 py-1 text-sm font-mono text-gray-300" />
+              {/if}
+              <button class="btn px-2 py-0.5 text-xs" on:click={() => showPassword = !showPassword}>
                 {showPassword ? 'HIDE' : 'SHOW'}
               </button>
               {#if entry.password}
-                <button class="btn px-2 py-0.5 text-[10px]" on:click={() => copyToClipboard(entry.password, 'Password')}>
+                <button class="btn px-2 py-0.5 text-xs" on:click={() => copyToClipboard(entry.password, 'Password')}>
                   COPY
                 </button>
               {/if}
@@ -201,7 +209,8 @@
           </div>
         </div>
       {/if}
-      <div class="mt-3 text-[10px] font-mono text-gray-700">
+      
+      <div class="mt-3 text-xs font-mono text-gray-700">
         {new Date(entry.createdAt).toISOString().split('T')[0]}
         {#if entry.passwordSetDate}
           | PWD: {new Date(entry.passwordSetDate).toISOString().split('T')[0]}
@@ -210,10 +219,35 @@
     </div>
   {:else}
     <div class="space-y-2">
-      <input type="text" bind:value={editData.title} placeholder="TITLE" class="input-field text-xs" />
-      <input type="url" bind:value={editData.url} placeholder="URL" class="input-field text-xs" />
-      <input type="text" bind:value={editData.username} placeholder="USERNAME" class="input-field text-xs" />
-      <input type="password" bind:value={editData.password} placeholder="PASSWORD" class="input-field text-xs" />
+      <input type="text" bind:value={editData.title} placeholder="TITLE" class="input-field text-sm" />
+      <input type="url" bind:value={editData.url} placeholder="URL" class="input-field text-sm" />
+      <input type="text" bind:value={editData.username} placeholder="USERNAME" class="input-field text-sm" />
+      
+      <div class="relative">
+        {#if showEditPassword}
+          <input 
+            type="text"
+            bind:value={editData.password} 
+            placeholder="PASSWORD" 
+            class="input-field text-sm pr-16" 
+          />
+        {:else}
+          <input 
+            type="password"
+            bind:value={editData.password} 
+            placeholder="PASSWORD" 
+            class="input-field text-sm pr-16" 
+          />
+        {/if}
+        <button
+          type="button"
+          class="absolute right-2 top-1/2 -translate-y-1/2 text-xs font-mono text-gray-500 hover:text-cyan-400 transition-colors px-2"
+          on:click={() => showEditPassword = !showEditPassword}
+        >
+          {showEditPassword ? 'HIDE' : 'SHOW'}
+        </button>
+      </div>
+      
       <div class="flex items-center gap-3">
         <label class="flex items-center gap-2 text-xs font-mono text-gray-400 hover:text-cyan-400 cursor-pointer">
           <input type="checkbox" bind:checked={editData._neverExpire} class="w-3 h-3" />
@@ -226,9 +260,11 @@
           <span class="text-xs font-mono text-gray-400">days</span>
         {/if}
       </div>
-      <input type="url" bind:value={editData.docsUrl} placeholder="DOCS URL" class="input-field text-xs" />
-      <input type="text" value={editData.tags ? editData.tags.join(', ') : ''} on:input={(e) => editData.tags = e.target.value} placeholder="TAGS" class="input-field text-xs" />
-      <textarea bind:value={editData.notes} placeholder="NOTES" rows="2" class="input-field text-xs resize-none" />
+      
+      <input type="url" bind:value={editData.docsUrl} placeholder="DOCS URL" class="input-field text-sm" />
+      <input type="text" value={editData.tags ? editData.tags.join(', ') : ''} on:input={(e) => editData.tags = e.target.value} placeholder="TAGS" class="input-field text-sm" />
+      <textarea bind:value={editData.notes} placeholder="NOTES" rows="2" class="input-field text-sm resize-none" />
+      
       <div class="flex gap-2">
         <button class="btn btn-primary flex-1 text-xs py-1" on:click={saveEdit}>
           SAVE

@@ -10,6 +10,8 @@ export const entries = writable([]);
 export const searchQuery = writable('');
 export const selectedTag = writable('');
 export const activeTab = writable('all'); 
+export const isProcessing = writable(false);
+export const processingMessage = writable('');
 
 export const config = writable({
   dbFilename: 'sams_database.sams',
@@ -73,7 +75,7 @@ export const allTags = derived(entries, ($entries) => {
 export const stats = derived(entries, ($entries) => {
   const total = $entries.length;
   const logins = $entries.filter(e => e.hasPassword).length;
-  const bookmarks = total - logins;
+  const bookmarks = $entries.filter(e => !e.hasPassword).length;
   
   const now = new Date();
   const expiring = $entries.filter(e => {
@@ -101,7 +103,7 @@ export function addEntry(entry) {
       id: Date.now(),
       createdAt: new Date().toISOString(),
       passwordSetDate: entry.password ? new Date().toISOString() : null,
-      expiryDays: entry.expiryDays ?? 90,
+      expiryDays: entry.expiryDays ?? 0, // Default to never expire
       hasPassword: !!(entry.username || entry.password)
     };
     isDirty.set(true);
@@ -113,13 +115,14 @@ export function updateEntry(id, updates) {
   entries.update(items => {
     const index = items.findIndex(e => e.id === id);
     if (index !== -1) {
-      if (updates.password && updates.password !== items[index].password) {
+      const currentItem = items[index];
+      if (updates.password && updates.password !== currentItem.password) {
         updates.passwordSetDate = new Date().toISOString();
       }
       items[index] = {
-        ...items[index],
+        ...currentItem,
         ...updates,
-        hasPassword: !!(updates.username || updates.password || items[index].username || items[index].password)
+        hasPassword: !!(updates.username || updates.password || currentItem.username || currentItem.password)
       };
       isDirty.set(true);
     }
@@ -145,52 +148,76 @@ export async function saveDatabase() {
   const pwd = get(masterPassword);
   if (!pwd) throw new Error('No master password set');
   
-  const entriesData = get(entries);
+  isProcessing.set(true);
+  processingMessage.set('Encrypting database...');
   
-  const encryptedBlob = await encryptData(entriesData, pwd);
-  const blob = new Blob([encryptedBlob], { type: 'application/octet-stream' });
-  
-  const configData = get(config);
-  
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = get(currentDatabase) || configData.dbFilename;
-  a.click();
-  URL.revokeObjectURL(url);
-  
-  isDirty.set(false);
+  try {
+    const entriesData = get(entries);
+    
+    const encryptedBlob = await encryptData(entriesData, pwd);
+    const blob = new Blob([encryptedBlob], { type: 'application/octet-stream' });
+    
+    const configData = get(config);
+    
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = get(currentDatabase) || configData.dbFilename;
+    a.click();
+    URL.revokeObjectURL(url);
+    
+    isDirty.set(false);
+  } finally {
+    isProcessing.set(false);
+    processingMessage.set('');
+  }
 }
 
 export async function loadDatabase(file, password) {
-  const encryptedBlob = await file.arrayBuffer();
+  isProcessing.set(true);
+  processingMessage.set('Decrypting database...');
   
-  const decrypted = await decryptData(encryptedBlob, password);
+  try {
+    const encryptedBlob = await file.arrayBuffer();
+    
+    const decrypted = await decryptData(encryptedBlob, password);
 
-  const normalizedEntries = decrypted.map(entry => ({
-    ...entry,
-    tags: entry.tags || [],
-    notes: entry.notes || '',
-    docsUrl: entry.docsUrl || '',
-    createdAt: entry.createdAt || new Date().toISOString(),
-    passwordSetDate: entry.passwordSetDate || (entry.password ? entry.createdAt : null),
-    expiryDays: entry.expiryDays ?? 90,
-    hasPassword: !!(entry.username || entry.password)
-  }));
-  
-  entries.set(normalizedEntries);
-  currentDatabase.set(file.name);
-  masterPassword.set(password);
-  isAuthenticated.set(true);
-  isDirty.set(false);
+    const normalizedEntries = decrypted.map(entry => ({
+      ...entry,
+      tags: entry.tags || [],
+      notes: entry.notes || '',
+      docsUrl: entry.docsUrl || '',
+      createdAt: entry.createdAt || new Date().toISOString(),
+      passwordSetDate: entry.passwordSetDate || (entry.password ? entry.createdAt : null),
+      expiryDays: entry.expiryDays ?? 90,
+      hasPassword: !!(entry.username || entry.password)
+    }));
+    
+    entries.set(normalizedEntries);
+    currentDatabase.set(file.name);
+    masterPassword.set(password);
+    isAuthenticated.set(true);
+    isDirty.set(false);
+  } finally {
+    isProcessing.set(false);
+    processingMessage.set('');
+  }
 }
 
 export async function createNewDatabase(password) {
-  entries.set([]);
-  currentDatabase.set(null);
-  masterPassword.set(password);
-  isAuthenticated.set(true);
-  isDirty.set(true); 
+  isProcessing.set(true);
+  processingMessage.set('Initializing database...');
+  
+  try {
+    entries.set([]);
+    currentDatabase.set(null);
+    masterPassword.set(password);
+    isAuthenticated.set(true);
+    isDirty.set(true); 
+  } finally {
+    isProcessing.set(false);
+    processingMessage.set('');
+  }
 }
 
 export function logout() {
@@ -202,4 +229,6 @@ export function logout() {
   searchQuery.set('');
   selectedTag.set('');
   activeTab.set('all');
+  isProcessing.set(false);
+  processingMessage.set('');
 }
